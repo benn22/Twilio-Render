@@ -6,7 +6,7 @@ import os
 
 app = Flask(__name__)
 
-# 🔐 Configura esto con tus propios datos:
+# Configura tus datos aquí:
 PROJECT_ID = "TU_PROJECT_ID_AQUI"
 LANGUAGE_CODE = "es"
 SESSION_ID = "whatsapp-session"
@@ -19,12 +19,10 @@ def webhook():
     print(f"📩 Mensaje recibido: '{incoming_msg}' de {phone}")
 
     url = f"https://dialogflow.googleapis.com/v2/projects/{PROJECT_ID}/agent/sessions/{SESSION_ID}/detectIntent"
-
     headers = {
         "Authorization": ACCESS_TOKEN,
         "Content-Type": "application/json"
     }
-
     body = {
         "queryInput": {
             "text": {
@@ -34,12 +32,18 @@ def webhook():
         }
     }
 
+    # Prints para debug
+    print("🔹 URL:", url)
+    print("🔹 Headers:", headers)
+    print("🔹 Body:", json.dumps(body, indent=2))
+
     try:
         dialogflow_response = requests.post(url, headers=headers, data=json.dumps(body))
-        print("📡 Enviado a Dialogflow. Status:", dialogflow_response.status_code)
+        print("🔹 Status code:", dialogflow_response.status_code)
+        print("🔹 Response text:", dialogflow_response.text)
 
         if dialogflow_response.status_code != 200:
-            print("❌ Error en respuesta:", dialogflow_response.text)
+            print("❌ Error en respuesta de Dialogflow.")
             twilio_response = MessagingResponse()
             twilio_response.message("Error al contactar Dialogflow.")
             return str(twilio_response)
@@ -50,7 +54,6 @@ def webhook():
 
     except Exception as e:
         print("❌ Excepción al procesar:", str(e))
-        print("🧾 Respuesta cruda:", dialogflow_response.text if dialogflow_response else "No hay respuesta")
         fulfillment_text = "Error interno al procesar tu mensaje."
 
     twilio_response = MessagingResponse()
@@ -61,7 +64,6 @@ def webhook():
 def home():
     return "Webhook activo."
 
-# 👇 Configura para Render: escucha en 0.0.0.0:$PORT
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
