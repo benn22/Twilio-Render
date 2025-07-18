@@ -34,17 +34,22 @@ def webhook():
     dialogflow_response = requests.post(url, headers=headers, data=json.dumps(body))
     
     if dialogflow_response.status_code != 200:
-        print("❌ Error en respuesta de Dialogflow:", dialogflow_response.status_code, dialogflow_response.text)
-        return str(MessagingResponse().message("Hubo un error al contactar Dialogflow."))
+        print("❌ Error desde Dialogflow:", dialogflow_response.status_code, dialogflow_response.text)
+        twilio_response = MessagingResponse()
+        twilio_response.message("Error al contactar con Dialogflow.")
+        return str(twilio_response)
     
     try:
         result = dialogflow_response.json()
         fulfillment_text = result['queryResult']['fulfillmentText']
     except Exception as e:
-        print("❌ Error al parsear JSON de Dialogflow:", str(e))
-        return str(MessagingResponse().message("Respuesta inválida de Dialogflow."))
+        print("❌ Error al interpretar la respuesta de Dialogflow:", e)
+        print("Respuesta sin parsear:", dialogflow_response.text)
+        twilio_response = MessagingResponse()
+        twilio_response.message("Respuesta inválida de Dialogflow.")
+        return str(twilio_response)
 
-    fulfillment_text = result['queryResult']['fulfillmentText']
+    #fulfillment_text = result['queryResult']['fulfillmentText']
 
     # Twilio reply
     twilio_response = MessagingResponse()
